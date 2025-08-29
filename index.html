@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FLY WITH DHIRAJ</title>
+    <style>
+        /* Center the body and container */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #0d1a26; /* Night background */
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            position: relative;
+        }
+        canvas {
+            background: linear-gradient(#0d1a26, #1a2a43); /* Gradient night sky */
+            border: 5px solid #333;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            /* Make canvas responsive for mobile */
+            max-width: 90%;
+            max-height: 90vh;
+            width: auto;
+            height: auto;
+            display: block;
+        }
+        #message-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 30px 50px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            display: none;
+            z-index: 10;
+        }
+        #message-box h2 {
+            margin-top: 0;
+            font-size: 3rem;
+            color: #333;
+            font-weight: 900;
+        }
+        #message-box p {
+            margin: 10px 0;
+            font-size: 1.4rem;
+            color: #555;
+        }
+        #message-box button {
+            background: linear-gradient(145deg, #2196f3, #1976d2);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            border-radius: 10px;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin: 5px; /* Added margin for multiple buttons */
+        }
+        #message-box button:hover {
+            transform: translateY(-2px);
+            box-shadow: 6px 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        /* Score display */
+        #score-display {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 4rem;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+            z-index: 5;
+        }
+        /* Stars */
+        .star {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            opacity: 0;
+            animation: twinkle 5s linear infinite;
+        }
+
+        /* Moon */
+        #moon {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background-color: #f7f7e8;
+            border-radius: 50%;
+            top: 50px;
+            right: 50px;
+            box-shadow: 0 0 20px #f7f7e8, 0 0 40px #f7f7e8, 0 0 60px #f7f7e8;
+            animation: pulse-glow 3s ease-in-out infinite;
+        }
+
+        /* Twinkle animation for stars */
+        @keyframes twinkle {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px #f7f7e8, 0 0 40px #f7f7e8; }
+            50% { box-shadow: 0 0 30px #f7f7e8, 0 0 60px #f7f7e8; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="moon"></div>
+<div class="star" style="width: 2px; height: 2px; top: 15%; left: 25%; animation-delay: 1s;"></div>
+<div class="star" style="width: 3px; height: 3px; top: 35%; left: 60%; animation-delay: 2.5s;"></div>
+<div class="star" style="width: 2px; height: 2px; top: 5%; left: 80%; animation-delay: 0.5s;"></div>
+<div class="star" style="width: 4px; height: 4px; top: 50%; left: 10%; animation-delay: 3s;"></div>
+<div class="star" style="width: 2px; height: 2px; top: 70%; left: 45%; animation-delay: 1.8s;"></div>
+<div class="star" style="width: 3px; height: 3px; top: 85%; left: 75%; animation-delay: 4s;"></div>
+
+<div id="score-display">0</div>
+<canvas id="gameCanvas"></canvas>
+<div id="message-box">
+    <h2 id="message-heading"></h2>
+    <p id="message-text"></p>
+    <button id="ai-button" style="display:none;">✨ Get AI Message</button>
+    <button id="action-button">Play</button>
+</div>
+
+<script>
+    // Get the canvas and its 2D drawing context
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const messageBox = document.getElementById('message-box');
+    const messageHeading = document.getElementById('message-heading');
+    const messageText = document.getElementById('message-text');
+    const actionButton = document.getElementById('action-button');
+    const aiButton = document.getElementById('ai-button');
+    const scoreDisplay = document.getElementById('score-display');
+    const birdImage = new Image();
+    birdImage.src = 'https://i.ibb.co/WN3r798c/Adobe-Express-file.png';
+
+    // Canvas dimensions
+    let canvasWidth, canvasHeight;
+    function resizeCanvas() {
+        canvasWidth = Math.min(window.innerWidth * 0.9, 480);
+        canvasHeight = Math.min(window.innerHeight * 0.9, 640);
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+    }
+
+    window.addEventListener('load', resizeCanvas);
+    window.addEventListener('resize', resizeCanvas);
+    
+    // Game variables
+    let isGameOver = true;
+    let score = 0;
+    let frame = 0;
+    let animationFrameId;
+
+    // Bird properties
+    const bird = {
+        x: 50,
+        y: 0, // Y coordinate will be set in resetGame
+        size: 50, // Image size
+        velocity: 0,
+        gravity: 0.2,
+        jumpPower: -5
+    };
+
+    // Pipe properties
+    const pipes = [];
+    const pipeWidth = 60;
+    const pipeGap = 160;
+    const pipeSpeed = 2;
+
+    // Building properties for a city look
+    const buildings = [
+        // Buildings with different layers and colors for parallax effect
+        { x: 0, speed: 0.5, color: '#1f2e4a', layers: [
+            { width: 80, height: 180, offset: 0 },
+            { width: 60, height: 250, offset: 90 },
+            { width: 100, height: 200, offset: 180 },
+            { width: 70, height: 220, offset: 280 },
+            { width: 90, height: 280, offset: 360 },
+            { width: 120, height: 150, offset: 480 },
+            { width: 80, height: 210, offset: 600 }
+        ]},
+        { x: 0, speed: 1, color: '#2a3d5f', layers: [
+            { width: 90, height: 150, offset: 40 },
+            { width: 70, height: 200, offset: 150 },
+            { width: 110, height: 180, offset: 250 },
+            { width: 80, height: 240, offset: 370 },
+            { width: 100, height: 190, offset: 490 },
+            { width: 60, height: 260, offset: 610 },
+            { width: 130, height: 170, offset: 700 }
+        ]}
+    ];
+
+    // Function to draw the bird with a glowing effect
+    function drawBird() {
+        const glowIntensity = Math.abs(Math.sin(frame / 30)) * 5 + 10;
+        ctx.shadowColor = '#fff';
+        ctx.shadowBlur = glowIntensity;
+        ctx.drawImage(birdImage, bird.x - bird.size / 2, bird.y - bird.size / 2, bird.size, bird.size);
+        ctx.shadowBlur = 0; // Reset shadow
+    }
+
+    // Function to draw pipes with rounded corners and glowing effect
+    function drawPipes() {
+        const glowIntensity = Math.abs(Math.sin(frame / 30)) * 5 + 10; // Pulsating effect
+        ctx.shadowColor = '#ffffff'; // White glow
+        ctx.shadowBlur = glowIntensity;
+
+        ctx.fillStyle = '#ffffff'; /* White pillars */
+        pipes.forEach(p => {
+            // Upper pipe
+            roundRect(ctx, p.x, 0, pipeWidth, p.top, 8);
+            // Lower pipe
+            roundRect(ctx, p.x, p.bottom, pipeWidth, canvasHeight - p.bottom, 8);
+        });
+
+        // Reset shadow to avoid affecting other elements
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
+    }
+
+    // Function to draw a rectangle with rounded corners
+    function roundRect(ctx, x, y, width, height, radius) {
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        ctx.lineTo(x + radius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    // Function to draw buildings
+    function drawBuildings() {
+        buildings.forEach(buildingLayer => {
+            ctx.fillStyle = buildingLayer.color;
+            buildingLayer.layers.forEach(b => {
+                const xPos = (b.offset + buildingLayer.x) % (canvasWidth + b.width);
+                const yPos = canvasHeight - b.height;
+                roundRect(ctx, xPos, yPos, b.width, b.height, 5);
+                // Draw a copy on the left for seamless loop
+                if (xPos + b.width > canvasWidth) {
+                    roundRect(ctx, xPos - canvasWidth - b.width, yPos, b.width, b.height, 5);
+                }
+            });
+        });
+    }
+
+    // Function to update building positions
+    function updateBuildings() {
+        buildings.forEach(buildingLayer => {
+            buildingLayer.x -= buildingLayer.speed;
+            // Loop buildings seamlessly
+            if (buildingLayer.x < -canvasWidth) {
+                buildingLayer.x = 0;
+            }
+        });
+    }
+
+    // Function to update bird's position
+    function updateBird() {
+        bird.velocity += bird.gravity;
+        bird.y += bird.velocity;
+    }
+
+    // Function to update pipe positions and create new pipes
+    function updatePipes() {
+        // Move existing pipes
+        pipes.forEach(p => {
+            p.x -= pipeSpeed;
+        });
+
+        // Remove pipes that are off-screen
+        if (pipes.length > 0 && pipes[0].x < -pipeWidth) {
+            pipes.shift();
+        }
+
+        // Create a new pipe set every 120 frames
+        if (frame % 120 === 0) {
+            const gapY = Math.random() * (canvasHeight - pipeGap * 2) + pipeGap;
+            pipes.push({
+                x: canvasWidth,
+                top: gapY - pipeGap / 2,
+                bottom: gapY + pipeGap / 2,
+                scored: false
+            });
+        }
+    }
+
+    // Function to check for collisions
+    function checkCollision() {
+        // Check collision with canvas boundaries
+        if (bird.y + bird.size / 2 > canvasHeight || bird.y - bird.size / 2 < 0) {
+            return true;
+        }
+
+        // Check collision with pipes
+        for (const p of pipes) {
+            // Check if bird is within the pipe's x-range
+            if (bird.x + bird.size / 2 > p.x && bird.x - bird.size / 2 < p.x + pipeWidth) {
+                // Check if bird is within the pipe's y-range
+                if (bird.y - bird.size / 2 < p.top || bird.y + bird.size / 2 > p.bottom) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    // Function to update the score
+    function updateScore() {
+        pipes.forEach(p => {
+            if (p.x + pipeWidth < bird.x && !p.scored) {
+                score++;
+                p.scored = true;
+                scoreDisplay.textContent = score;
+            }
+        });
+    }
+    
+    // The main game loop function
+    function gameLoop() {
+        if (isGameOver) {
+            return;
+        }
+
+        // Clear the screen
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+        // Update and draw all elements
+        updateBuildings();
+        drawBuildings();
+        updateBird();
+        updatePipes();
+        drawPipes();
+        drawBird();
+        updateScore();
+
+        // Check for game over
+        if (checkCollision()) {
+            gameOver();
+        }
+
+        frame++;
+        animationFrameId = requestAnimationFrame(gameLoop);
+    }
+
+    // Function to show the game over screen
+    function gameOver() {
+        isGameOver = true;
+        cancelAnimationFrame(animationFrameId);
+        messageHeading.textContent = "Game Over!";
+        messageText.textContent = `Your score is: ${score}`;
+        actionButton.textContent = "Restart";
+        actionButton.style.display = 'inline-block';
+        aiButton.style.display = 'inline-block';
+        messageBox.style.display = 'block';
+    }
+
+    // Function to reset the game
+    function resetGame() {
+        isGameOver = false;
+        score = 0;
+        frame = 0;
+        bird.y = canvasHeight / 2;
+        bird.velocity = 0;
+        pipes.length = 0; // Clear all pipes
+        scoreDisplay.textContent = score;
+        messageBox.style.display = 'none';
+        aiButton.style.display = 'none';
+        gameLoop();
+    }
+
+    // Event listener for jumping
+    function handleJump() {
+        if (!isGameOver) {
+            bird.velocity = bird.jumpPower;
+        }
+    }
+    
+    // Listen for both mouse clicks and touch
+    canvas.addEventListener('mousedown', handleJump);
+    canvas.addEventListener('touchstart', handleJump);
+    
+    // Event listener for the action button
+    actionButton.addEventListener('click', () => {
+        resetGame();
+    });
+
+    // Function to show the welcome screen
+    function showWelcomeScreen() {
+        messageHeading.textContent = "FLY WITH DHIRAJ";
+        messageText.textContent = "Click the 'Play' button to start.";
+        actionButton.textContent = "Play";
+        actionButton.style.display = 'inline-block';
+        aiButton.style.display = 'none';
+        messageBox.style.display = 'block';
+    }
+
+    // Gemini API integration for AI message
+    async function getAiMessage() {
+        messageText.textContent = "Generating a message from the AI...";
+        aiButton.style.display = 'none';
+        actionButton.style.display = 'none';
+
+        const apiKey = "";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+        let prompt;
+        if (score < 5) {
+            prompt = `The user scored ${score}. Write a short, encouraging message to them.`;
+        } else if (score < 15) {
+            prompt = `The user scored ${score}. Write an impressive message congratulating them on a good performance.`;
+        } else {
+            prompt = `The user scored ${score}. Write a super inspiring message for an excellent performance.`;
+        }
+        
+        const payload = {
+            contents: [{ parts: [{ text: prompt }] }],
+            systemInstruction: {
+                parts: [{ text: "You are a friendly and encouraging game companion. Provide a single, positive message based on the user's game score. Do not mention your purpose or act like an AI. Keep it short and positive." }]
+            }
+        };
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status} ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            const aiMessage = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (aiMessage) {
+                messageText.textContent = aiMessage;
+            } else {
+                messageText.textContent = "Something went wrong. Please try again.";
+            }
+
+        } catch (error) {
+            console.error("Failed to fetch AI message:", error);
+            messageText.textContent = "Failed to get AI message. Network error.";
+        } finally {
+            actionButton.style.display = 'inline-block';
+        }
+    }
+
+    aiButton.addEventListener('click', getAiMessage);
+
+    // When the image loads, show the welcome screen
+    birdImage.onload = () => {
+        resizeCanvas();
+        showWelcomeScreen();
+    };
+
+    // Fallback if the image fails to load
+    birdImage.onerror = () => {
+        console.error("Error loading bird image.");
+        // Fallback to a simple shape
+        drawBird = function() {
+            ctx.fillStyle = '#ffc107';
+            ctx.beginPath();
+            ctx.arc(bird.x, bird.y, bird.size / 2, 0, Math.PI * 2);
+            ctx.fill();
+        };
+        resizeCanvas();
+        showWelcomeScreen();
+    };
+
+</script>
+</body>
+</html>
