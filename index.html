@@ -415,14 +415,14 @@
         aiButton.style.display = 'none';
         messageBox.style.display = 'block';
     }
-
+    
     // Gemini API integration for AI message
     async function getAiMessage() {
         messageText.textContent = "Generating a message from the AI...";
         aiButton.style.display = 'none';
         actionButton.style.display = 'none';
 
-        const apiKey = "";
+        const apiKey = "AIzaSyBApYs6AdjUbemdrdqJ0HwWYt-FUKvDrH0"; // Replaced with your actual Gemini API key
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
         let prompt;
